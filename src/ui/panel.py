@@ -168,6 +168,11 @@ class SaveDinoModal(discord.ui.Modal):
             if "Slot" in message or "free slot" in message:
                 message = t(self.locale, "slot_required")
             await interaction.response.send_message(message, ephemeral=True)
+        except Exception as exc:  # noqa: BLE001
+            await interaction.response.send_message(
+                t(self.locale, "restore_error", error=str(exc)),
+                ephemeral=True,
+            )
 
 
 class SteamVerifyModal(discord.ui.Modal):

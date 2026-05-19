@@ -84,7 +84,14 @@ class PterodactylRconService:
         def _request() -> dict[str, Any]:
             response = requests.get(url, headers=self._headers(), timeout=10)
             response.raise_for_status()
-            return response.json()
+            try:
+                return response.json()
+            except ValueError as exc:
+                preview = response.text.strip().replace("\n", " ")[:200]
+                raise RuntimeError(
+                    "Pterodactyl API returned non-JSON response. "
+                    f"status={response.status_code} preview={preview!r}"
+                ) from exc
 
         return await asyncio.to_thread(_request)
 
@@ -92,12 +99,22 @@ class PterodactylRconService:
         server = self._get_server(server_id)
 
         def _send() -> Any:
-            return rcon_execute(
-                (server.host, server.port),
-                server.password,
-                command,
-                timeout=server.timeout,
-            )
+            # Compatibility: some python-valve versions do not accept a timeout kwarg.
+            try:
+                return rcon_execute(
+                    (server.host, server.port),
+                    server.password,
+                    command,
+                    timeout=server.timeout,
+                )
+            except TypeError as exc:
+                if "unexpected keyword argument 'timeout'" not in str(exc):
+                    raise
+                return rcon_execute(
+                    (server.host, server.port),
+                    server.password,
+                    command,
+                )
 
         result = await asyncio.to_thread(_send)
         return str(result)

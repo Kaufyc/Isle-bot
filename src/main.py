@@ -191,7 +191,16 @@ async def verify_steam(interaction: discord.Interaction) -> None:
 @bot.tree.command(name="server_status", description="Server-Status anzeigen")
 @app_commands.checks.has_permissions(administrator=True)
 async def server_status(interaction: discord.Interaction, server_id: str) -> None:
-    data = await bot.rcon_service.get_server_resources(server_id)
+    try:
+        data = await bot.rcon_service.get_server_resources(server_id)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("server_status failed for server_id=%s", server_id)
+        await interaction.response.send_message(
+            f"Server-Status konnte nicht geladen werden: {exc}",
+            ephemeral=True,
+        )
+        return
+
     if not data:
         await interaction.response.send_message(
             "Pterodactyl ist fuer diesen Server nicht konfiguriert.",
@@ -268,7 +277,12 @@ async def admin_only_error(interaction: discord.Interaction, error: app_commands
     if isinstance(error, app_commands.errors.MissingPermissions):
         await interaction.response.send_message("Admin-Berechtigung erforderlich.", ephemeral=True)
         return
-    raise error
+    logger.exception("Command error", exc_info=error)
+    message = "Fehler beim Ausfuehren des Befehls. Bitte Logs pruefen."
+    if interaction.response.is_done():
+        await interaction.followup.send(message, ephemeral=True)
+    else:
+        await interaction.response.send_message(message, ephemeral=True)
 
 
 def main() -> None:
