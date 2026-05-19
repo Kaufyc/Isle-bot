@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,7 +29,7 @@ class AppSettings:
     online_players_command: str
     player_dino_query_template: str
     kill_character_command_template: str
-    rcon_servers: list[RconConfig]
+    rcon_server: RconConfig
 
 
 def _env(name: str, default: str | None = None) -> str | None:
@@ -47,36 +46,16 @@ def _env_int(name: str, default: int) -> int:
     return int(value)
 
 
-def _parse_servers_from_env() -> list[RconConfig]:
-    servers_json = _env("SERVERS_JSON")
-    if servers_json:
-        raw = json.loads(servers_json)
-        parsed: list[RconConfig] = []
-        for item in raw:
-            parsed.append(
-                RconConfig(
-                    server_id=str(item["id"]),
-                    cluster_id=str(item.get("cluster", "default")),
-                    host=str(item["host"]),
-                    port=int(item["port"]),
-                    password=str(item["password"]),
-                    timeout=int(item.get("timeout", 8)),
-                    pterodactyl_server_identifier=item.get("pterodactyl_server_identifier"),
-                )
-            )
-        return parsed
-
-    return [
-        RconConfig(
-            server_id="default",
-            cluster_id="default",
-            host=_env("RCON_HOST", "127.0.0.1") or "127.0.0.1",
-            port=int(_env("RCON_PORT", "7778") or "7778"),
-            password=_env("RCON_PASSWORD", "") or "",
-            timeout=int(_env("RCON_TIMEOUT", "8") or "8"),
-            pterodactyl_server_identifier=_env("PTERODACTYL_SERVER_IDENTIFIER"),
-        )
-    ]
+def _parse_server_from_env() -> RconConfig:
+    return RconConfig(
+        server_id=_env("RCON_SERVER_ID", "default") or "default",
+        cluster_id=_env("RCON_CLUSTER_ID", "default") or "default",
+        host=_env("RCON_HOST", "127.0.0.1") or "127.0.0.1",
+        port=int(_env("RCON_PORT", "7778") or "7778"),
+        password=_env("RCON_PASSWORD", "") or "",
+        timeout=int(_env("RCON_TIMEOUT", "8") or "8"),
+        pterodactyl_server_identifier=_env("PTERODACTYL_SERVER_IDENTIFIER"),
+    )
 
 
 def load_settings(root: Path | None = None) -> AppSettings:
@@ -125,5 +104,5 @@ def load_settings(root: Path | None = None) -> AppSettings:
             _env("KILL_CHARACTER_COMMAND_TEMPLATE", "kill_player_dino {steam_id}")
             or "kill_player_dino {steam_id}"
         ),
-        rcon_servers=_parse_servers_from_env(),
+        rcon_server=_parse_server_from_env(),
     )

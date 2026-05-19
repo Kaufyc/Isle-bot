@@ -20,7 +20,6 @@ It also includes optional **Pterodactyl API** status support and advanced server
 - Auto backup of SQLite database on interval
 - Admin logging channel integration
 - Ticket integration (`/create_restore_ticket` and panel button)
-- Multi-server and cluster support via `SERVERS_JSON`
 - Optional Pterodactyl server status command: `/server_status`
 - SQLite persistence
 
@@ -30,7 +29,7 @@ It also includes optional **Pterodactyl API** status support and advanced server
 - `src/settings.py` - Centralized `.env` loading and runtime configuration parsing
 - `src/ui/panel.py` - Discord panel UI, buttons, modal, localization, cooldown logic
 - `src/services/storage.py` - SQLite storage, Steam links, anti-duplication, expiration cleanup
-- `src/services/rcon_pterodactyl.py` - multi-server RCON + Pterodactyl + online checks
+- `src/services/rcon_pterodactyl.py` - single-server RCON + Pterodactyl + online checks
 - `.env.example` - Environment configuration template
 
 ## Setup (Windows PowerShell)
@@ -53,7 +52,7 @@ pip install -r requirements.txt
 Required minimum:
 
 - `DISCORD_TOKEN`
-- RCON settings (`RCON_*`) or `SERVERS_JSON`
+- RCON settings (`RCON_*`)
 
 Optional:
 
@@ -135,8 +134,8 @@ Load flow:
 4. Admin commands:
 
 ```text
-/server_status <server_id>
-/player_online <steam_id> <server_id>
+/server_status
+/player_online <steam_id>
 /admin_recreate <user> <slot>
 ```
 
@@ -162,4 +161,4 @@ Replace this with the exact command syntax your Isle Evrima server expects.
 
 - Slots are fixed to **1** and **2**.
 - If both slots are full, user must enter slot `1` or `2` to replace a dino.
-- Multiple servers/clusters are fully supported through `SERVERS_JSON`.
+- Single server mode uses `RCON_SERVER_ID`, `RCON_CLUSTER_ID`, and `RCON_*` values from `.env`.

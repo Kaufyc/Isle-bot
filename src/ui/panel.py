@@ -109,10 +109,8 @@ class SaveDinoModal(discord.ui.Modal):
         self.services = services
         self.locale = locale
 
-        self.server_input = discord.ui.TextInput(label="Server-ID", placeholder=", ".join(self.services.rcon_service.get_server_ids()))
         self.slot_input = discord.ui.TextInput(label="Slot 1-2 (optional)", required=False)
 
-        self.add_item(self.server_input)
         self.add_item(self.slot_input)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
@@ -129,7 +127,7 @@ class SaveDinoModal(discord.ui.Modal):
 
             slot_raw = str(self.slot_input.value).strip()
             requested_slot = int(slot_raw) if slot_raw else None
-            server_id = str(self.server_input.value).strip()
+            server_id = self.services.rcon_service.get_default_server_id()
             cluster_id = self.services.rcon_service.get_cluster_id(server_id)
 
             snapshot = await self.services.rcon_service.capture_and_kill_current_dino(server_id, steam_id)

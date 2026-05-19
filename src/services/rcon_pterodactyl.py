@@ -41,13 +41,10 @@ STEAM_ID_RE = re.compile(r"\b\d{17}\b")
 
 
 class PterodactylRconService:
-    def __init__(self, ptero: PterodactylConfig, servers: list[RconConfig], templates: TemplateConfig) -> None:
+    def __init__(self, ptero: PterodactylConfig, server: RconConfig, templates: TemplateConfig) -> None:
         self.ptero = ptero
         self.templates = templates
-        self.servers = {server.server_id: server for server in servers}
-
-        if not self.servers:
-            raise ValueError("At least one RCON server configuration is required")
+        self.server = server
 
     def _headers(self) -> dict[str, str]:
         if not self.ptero.api_key:
@@ -59,16 +56,18 @@ class PterodactylRconService:
         }
 
     def get_server_ids(self) -> list[str]:
-        return sorted(self.servers.keys())
+        return [self.server.server_id]
+
+    def get_default_server_id(self) -> str:
+        return self.server.server_id
 
     def get_cluster_id(self, server_id: str) -> str:
         return self._get_server(server_id).cluster_id
 
     def _get_server(self, server_id: str) -> RconConfig:
-        server = self.servers.get(server_id)
-        if not server:
+        if server_id != self.server.server_id:
             raise ValueError(f"Unknown server_id: {server_id}")
-        return server
+        return self.server
 
     async def get_server_resources(self, server_id: str) -> dict[str, Any] | None:
         server = self._get_server(server_id)

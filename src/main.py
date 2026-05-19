@@ -56,7 +56,7 @@ class IsleBot(commands.Bot):
 
         self.rcon_service = PterodactylRconService(
             ptero=ptero,
-            servers=settings.rcon_servers,
+            server=settings.rcon_server,
             templates=templates,
         )
 
@@ -190,7 +190,8 @@ async def verify_steam(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(name="server_status", description="Server-Status anzeigen")
 @app_commands.checks.has_permissions(administrator=True)
-async def server_status(interaction: discord.Interaction, server_id: str) -> None:
+async def server_status(interaction: discord.Interaction) -> None:
+    server_id = bot.rcon_service.get_default_server_id()
     try:
         data = await bot.rcon_service.get_server_resources(server_id)
     except Exception as exc:  # noqa: BLE001
@@ -221,20 +222,10 @@ async def server_status(interaction: discord.Interaction, server_id: str) -> Non
         f"Server: {server_id}\nStatus: {state}\nCPU: {cpu}%\nSpeicher: {memory_mb} MB",
         ephemeral=True,
     )
-
-
-@server_status.autocomplete("server_id")
-async def server_id_autocomplete(_: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-    return [
-        app_commands.Choice(name=sid, value=sid)
-        for sid in bot.rcon_service.get_server_ids()
-        if current.lower() in sid.lower()
-    ][:25]
-
-
 @bot.tree.command(name="player_online", description="Pruefen, ob eine SteamID online ist")
 @app_commands.checks.has_permissions(administrator=True)
-async def player_online(interaction: discord.Interaction, steam_id: str, server_id: str) -> None:
+async def player_online(interaction: discord.Interaction, steam_id: str) -> None:
+    server_id = bot.rcon_service.get_default_server_id()
     online = await bot.rcon_service.is_player_online(server_id, steam_id)
     await interaction.response.send_message(
         f"SteamID {steam_id} online auf {server_id}: {online}",
